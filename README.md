@@ -2,6 +2,9 @@
   <img src="https://github.com/user-attachments/assets/9d9f91fe-2e1a-4d95-aac5-bea1cb643975" alt="image"/>
 </p>
 
+(test commit)
+test
+test
 Hello, and welcome to the practical session of the Column Generation School 2025 👋 
 
 ### Before you start
