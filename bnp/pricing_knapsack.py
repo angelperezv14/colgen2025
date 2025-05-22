@@ -43,7 +43,31 @@ def solve_knapsack(sizes: List[int], values: List[float], capacity: int) -> tupl
     tuple[float, List[int]] - the optimal value and the packing of the items
     """
 
-    raise NotImplementedError("The knapsack solver is not implemented yet")
+    model = Model("Knapsack")
+    n = len(sizes)
+    
+    # Decision variables
+    x = {}
+    for i in range(n):
+        x[i] = model.addVar(vtype="B", name=f"x_{i}")
+    
+    # Capacity Constraint
+    model.addCons(sum(sizes[i] * x[i] for i in range(n)) <= capacity)
+
+    # Objective: maximize the value
+    model.setObjective(sum(values[i] * x[i] for i in range(n)), "maximize")
+
+    model.optimize()
+
+    # Construct the solution
+    selected = []
+    for i in range(n):
+        if model.getVal(x[i]) > 0.5:
+            selected.append(i)
+
+    return model.getObjVal(), selected
+
+    #raise NotImplementedError("The knapsack solver is not implemented yet")
 
 
 def solve_knapsack_with_constraints(
@@ -64,4 +88,27 @@ def solve_knapsack_with_constraints(
     tuple[float, List[int]] - the optimal value and the packing of the items
     """
 
+    model = Model("Knapsack with constraints")
+    n = len(sizes)
+    x = {i: model.addVar(vtype="B", name=f"x_{i}") for i in range(n)}
+
+    # Capacity constraint
+    model.addCons(sum(sizes[i] * x[i] for i in range(n)) <= capacity)
+
+    # Together constraints: x_i - x_j == 0
+    for i, j in together:
+        model.addCons(x[i] - x[j] == 0, name=f"together_{i}_{j}")
+
+    # Apart constraints: x_i + x_j <= 1
+    for i, j in apart:
+        model.addCons(x[i] + x[j] <= 1, name=f"apart_{i}_{j}")
+
+    # Objective: maximize the value
+    # Objective: maximize value
+    model.setObjective(sum(values[i] * x[i] for i in range(n)), "maximize")
+
+    model.optimize()
+
+    selected = [i for i in range(n) if model.getVal(x[i]) > 0.5]
+    return model.getObjVal(), selected
     raise NotImplementedError("The knapsack solver with constraints is not implemented yet")

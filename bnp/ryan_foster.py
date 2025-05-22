@@ -1,3 +1,5 @@
+from collections import defaultdict
+from itertools import combinations
 from typing import List
 from pyscipopt import Branchrule, SCIP_RESULT
 
@@ -29,23 +31,28 @@ class RyanFoster(Branchrule):
         chosen_pair = choose_fractional_pair(patterns_with_vals)
 
         # TODO (Exercise 2: choose a fractional pair to branch on)
+        current_number = self.model.getCurrentNode().getNumber()
+        parent_decisions = self.branching_decisions.get(current_number, {"together": set(), "apart": set()})
+
+        # Unpack the current pair
+        i, j = chosen_pair
+
         # Left subproblem: enforce that pair is in the same bin
         left_node = self.model.createChild(0, 0)
-        
-        raise NotImplementedError("Complete the following: what should be the value of together and apart?")
-        # self.branching_decisions[left_node.getNumber()] = {
-        #     "together": ?,
-        #     "apart": ?
-        # }
+        #raise NotImplementedError("Complete the following: what should be the value of together and apart?")
+        self.branching_decisions[left_node.getNumber()] = {
+             "together": parent_decisions["together"] | {(i,j)},
+             "apart": parent_decisions["apart"]
+         }
 
         # Right subproblem: enforce that pair is in different bins
         right_node = self.model.createChild(0, 0)
 
-        raise NotImplementedError("Complete the following: what should be the value of together and apart?")
-        # self.branching_decisions[right_node.getNumber()] = {
-            # "together": ?,
-            # "apart": ?
-        # }
+        #raise NotImplementedError("Complete the following: what should be the value of together and apart?")
+        self.branching_decisions[right_node.getNumber()] = {
+            "together": parent_decisions["together"],
+            "apart": parent_decisions["apart"] | {(i,j)}
+        }
         
         return {"result": SCIP_RESULT.BRANCHED}
 
@@ -61,7 +68,20 @@ def all_fractional_pairs(patterns_with_vals: List[tuple[List[int], float]]) -> L
     List[tuple[int, int]] - a list of pairs of items that are fractional in the LP solution
     """
 
-    raise NotImplementedError("Implement this function")
+    pair_sums = defaultdict(float)
+
+    # Loop through each pattern and its LP value
+    for items, value in patterns_with_vals:
+        for i, j in combinations(sorted(items), 2): # all unordered item pairs
+            pair_sums[(i, j)] += value
+    
+    # Identify fractional pairs
+    fractional_pairs = [
+        (i, j) for (i, j), total in pair_sums.items()
+        if abs(total - round(total)) > 1e-6
+    ]
+    return fractional_pairs
+    # raise NotImplementedError("Implement this function")
 
 
 def choose_fractional_pair(patterns_with_vals: List[tuple[List[int], float]]) -> tuple[int, int]:
